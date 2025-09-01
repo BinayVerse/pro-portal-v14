@@ -46,7 +46,8 @@ export default defineNuxtConfig({
 
   // Development server configuration
   devServer: {
-    port: 3000
+    port: 3001,
+    host: 'localhost'
   },
 
   // Modules
@@ -138,6 +139,39 @@ export default defineNuxtConfig({
   // Build
   build: {
     transpile: ['@headlessui/vue'],
+  },
+
+  // Enable asset versioning/hashing for cache busting
+  vite: {
+    build: {
+      rollupOptions: {
+        output: {
+          // Add hash to chunk names for cache busting
+          chunkFileNames: 'assets/[name]-[hash].js',
+          entryFileNames: 'assets/[name]-[hash].js',
+          assetFileNames: 'assets/[name]-[hash].[ext]'
+        }
+      }
+    }
+  },
+
+  // Add proper cache control headers
+  routeRules: {
+    '/_nuxt/**': {
+      headers: {
+        'Cache-Control': 'public, max-age=31536000, immutable' // 1 year for hashed assets
+      }
+    },
+    '/api/**': {
+      headers: {
+        'Cache-Control': 'no-cache, no-store, must-revalidate' // No cache for API
+      }
+    },
+    '/**': {
+      headers: {
+        'Cache-Control': 'public, max-age=0, must-revalidate' // Always revalidate HTML
+      }
+    }
   },
 
   // Disable SSR for easier development
