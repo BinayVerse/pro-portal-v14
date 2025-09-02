@@ -4,6 +4,7 @@ import { SigninValidation } from '../../utils/validations';
 import { query } from '../../utils/db';
 import jwt from 'jsonwebtoken';
 import bcrypt from 'bcrypt';
+import { SessionManager } from '../../utils/session-manager';
 
 const config = useRuntimeConfig();
 
@@ -20,6 +21,11 @@ export default defineEventHandler(async (event) => {
 
     const email = body.email?.trim().toLowerCase();
     const password = body.password?.trim();
+
+    // Additional validation for trimmed password
+    if (!password || password.length === 0) {
+      throw new CustomError('Password cannot be empty.', 400);
+    }
 
     const userResult = await query(
       'SELECT * FROM users WHERE email = $1 AND role_id IN (0, 1)',
@@ -47,19 +53,36 @@ export default defineEventHandler(async (event) => {
       throw new CustomError('Your account access has been restricted. Please contact your administrator for assistance.', 403);
     }
 
+    // Check if user has a password set
+    if (!user.password || user.password.length === 0) {
+      throw new CustomError('Your account password is not set. Please contact support or reset your password.', 403);
+    }
+
     const validPassword = await bcrypt.compare(password, user.password);
     if (!validPassword) {
       throw new CustomError('The password you entered is incorrect. Please try again or reset your password.', 403);
     }
+
+    // Create session for concurrent login management
+    const deviceInfo = SessionManager.extractDeviceInfo(event.node.req.headers['user-agent']);
+    const ipAddress = SessionManager.extractIpAddress(event);
+
+    const sessionId = await SessionManager.createSession({
+      user_id: String(user.user_id), // Ensure user_id is passed as string
+      device_info: deviceInfo,
+      ip_address: ipAddress,
+      expires_in_hours: 24 // Session valid for 24 hours
+    });
 
     const token = jwt.sign(
       {
         user_id: user.user_id,
         email: user.email,
         org_id: user.org_id,
+        session_id: sessionId, // Include session ID in JWT
       },
       secret,
-      { expiresIn: '1h' }
+      { expiresIn: '24h' } // Match session expiry
     );
 
     setResponseStatus(event, 201);
@@ -68,7 +91,10 @@ export default defineEventHandler(async (event) => {
       statusCode: 201,
       status: 'success',
       token,
-      user,
+      user: {
+        ...user,
+        session_id: sessionId, // Include in user object
+      },
       redirect: '/profile',
     };
 

@@ -9,11 +9,19 @@ const pool = new Pool({
   database: config.dbName,
   user: config.dbUser,
   password: config.dbPassword,
-  // Pool configuration for better concurrency handling
-  max: 20, // Maximum number of clients in the pool
-  min: 2, // Minimum number of clients in the pool
-  idleTimeoutMillis: 30000, // Close idle clients after 30 seconds
-  connectionTimeoutMillis: 10000, // Return an error after 10 seconds if connection could not be established
+  // Enhanced pool configuration for better concurrency handling
+  max: 30, // Increased maximum number of clients in the pool
+  min: 5, // Increased minimum number of clients in the pool
+  idleTimeoutMillis: 60000, // Keep idle clients longer (60 seconds)
+  connectionTimeoutMillis: 15000, // Increased timeout to 15 seconds
+  acquireTimeoutMillis: 20000, // Time to wait for a connection
+  createTimeoutMillis: 10000, // Time to wait when creating a new client
+  createRetryIntervalMillis: 200, // Retry interval for creating connections
+  reapIntervalMillis: 1000, // How often to check for idle connections
+  allowExitOnIdle: false, // Don't exit process when pool is idle
+  statement_timeout: 30000, // Statement timeout (30 seconds)
+  query_timeout: 25000, // Query timeout (25 seconds)
+  application_name: 'provento_app', // Application name for monitoring
 });
 
 // Handle pool errors
