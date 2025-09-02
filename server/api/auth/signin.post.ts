@@ -4,7 +4,6 @@ import { SigninValidation } from '../../utils/validations';
 import { query } from '../../utils/db';
 import jwt from 'jsonwebtoken';
 import bcrypt from 'bcrypt';
-import { SessionManager } from '../../utils/session-manager';
 
 const config = useRuntimeConfig();
 
@@ -63,26 +62,14 @@ export default defineEventHandler(async (event) => {
       throw new CustomError('The password you entered is incorrect. Please try again or reset your password.', 403);
     }
 
-    // Create session for concurrent login management
-    const deviceInfo = SessionManager.extractDeviceInfo(event.node.req.headers['user-agent']);
-    const ipAddress = SessionManager.extractIpAddress(event);
-
-    const sessionId = await SessionManager.createSession({
-      user_id: String(user.user_id), // Ensure user_id is passed as string
-      device_info: deviceInfo,
-      ip_address: ipAddress,
-      expires_in_hours: 24 // Session valid for 24 hours
-    });
-
     const token = jwt.sign(
       {
         user_id: user.user_id,
         email: user.email,
         org_id: user.org_id,
-        session_id: sessionId, // Include session ID in JWT
       },
       secret,
-      { expiresIn: '24h' } // Match session expiry
+      { expiresIn: '1h' }
     );
 
     setResponseStatus(event, 201);
@@ -91,10 +78,7 @@ export default defineEventHandler(async (event) => {
       statusCode: 201,
       status: 'success',
       token,
-      user: {
-        ...user,
-        session_id: sessionId, // Include in user object
-      },
+      user,
       redirect: '/profile',
     };
 

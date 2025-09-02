@@ -4,12 +4,6 @@ import { navigateTo, useNuxtApp } from '#app'
 
 export async function useSafeBlobFetch(url: string, options: RequestInit = {}): Promise<Blob> {
   const { showError } = useNotification()
-  const { handleAuthError } = useAuthErrorHandler({
-    retryAttempts: 1,
-    autoLogoutDelay: 3000,
-    showNotification: true
-  })
-
   const token = localStorage.getItem('authToken')
 
   const response = await fetch(url, {
@@ -21,15 +15,11 @@ export async function useSafeBlobFetch(url: string, options: RequestInit = {}): 
   })
 
   if (response.status === 401) {
-    const shouldLogout = await handleAuthError(
-      { statusCode: 401, message: 'Unauthorized blob fetch' },
-      `blob-fetch-${url}`
-    )
+    localStorage.removeItem('authToken')
+    localStorage.removeItem('authUser')
 
-    if (!shouldLogout) {
-      throw new Error('Authentication retry needed')
-    }
-
+    showError?.('Session expired. Please sign in again.')
+    navigateTo('/login')
     throw new Error('Unauthorized')
   }
 
