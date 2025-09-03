@@ -57,14 +57,14 @@ export default defineNuxtConfig({
   // UI Configuration
   ui: {
     global: true,
-    icons: ['heroicons', 'simple-icons'],
+    icons: ['heroicons', 'mdi'],
     safelistColors: ['primary', 'brand'],
   },
 
   // Icon Configuration
   icon: {
     serverBundle: {
-      collections: ['heroicons', 'simple-icons'],
+      collections: ['heroicons', 'mdi'],
     },
   },
 

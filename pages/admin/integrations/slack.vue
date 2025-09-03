@@ -4,7 +4,7 @@
     <div class="flex items-center justify-between">
       <div class="flex items-center space-x-3">
         <div class="w-10 h-10 bg-purple-500 rounded-lg flex items-center justify-center">
-          <UIcon name="simple-icons:slack" class="w-6 h-6 text-white" />
+          <UIcon name="mdi:slack" class="w-6 h-6 text-white" />
         </div>
         <div>
           <h1 class="text-2xl font-bold text-white">Slack Integration</h1>
